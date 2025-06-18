@@ -112,51 +112,57 @@ export class ElectronStorageService implements StorageService {
     try {
       // 動的インポートでstorage.tsを取得
       const { storage } = await import('../utils/storage')
-      const fullProjectData = storage.getProject(project.id)
-
-      if (fullProjectData) {
-        projectData.chapters = fullProjectData.chapters || []
-        projectData.characters = fullProjectData.characters || []
-        projectData.worldSettings = fullProjectData.worldSettings || []
-        projectData.plot = fullProjectData.plot || ''
-        projectData.synopsis = fullProjectData.synopsis || project.synopsis || ''
+      
+      // 章データを取得（個別に保存されている）
+      projectData.chapters = storage.getChapters(project.id) || []
+      
+      // キャラクターデータを取得
+      const charactersKey = `novel_editor_characters_${project.id}`
+      const charactersData = localStorage.getItem(charactersKey)
+      if (charactersData) {
+        try {
+          projectData.characters = JSON.parse(charactersData)
+        } catch (e) {
+          console.error('Failed to parse characters:', e)
+        }
       }
+      
+      // 世界観データを取得
+      const worldSettingsKey = `novel_editor_world_settings_${project.id}`
+      const worldSettingsData = localStorage.getItem(worldSettingsKey)
+      if (worldSettingsData) {
+        try {
+          projectData.worldSettings = JSON.parse(worldSettingsData)
+        } catch (e) {
+          console.error('Failed to parse world settings:', e)
+        }
+      }
+      
+      // プロットデータを取得
+      const plotKey = `novel_editor_plots_${project.id}`
+      const plotData = localStorage.getItem(plotKey)
+      if (plotData) {
+        try {
+          projectData.plot = JSON.parse(plotData)
+        } catch (e) {
+          console.error('Failed to parse plot:', e)
+        }
+      }
+      
+      // あらすじはプロジェクトに含まれている
+      projectData.synopsis = project.synopsis || ''
+      
+      console.log('Project data to save:', {
+        projectId: project.id,
+        title: project.title,
+        chaptersCount: projectData.chapters.length,
+        charactersCount: projectData.characters?.length || 0,
+        worldSettingsCount: projectData.worldSettings?.length || 0,
+        hasPlot: !!projectData.plot,
+        hasSynopsis: !!projectData.synopsis
+      })
     } catch (e) {
       console.error('Failed to get project data from storage:', e)
-
-      // フォールバック: LocalStorageから直接取得
-      if (typeof window !== 'undefined' && window.localStorage) {
-        const chaptersKey = `novel_editor_chapters_${project.id}`
-        const charactersKey = `novel_editor_characters_${project.id}`
-        const worldSettingsKey = `novel_editor_world_settings_${project.id}`
-
-        const chaptersData = window.localStorage.getItem(chaptersKey)
-        if (chaptersData) {
-          try {
-            projectData.chapters = JSON.parse(chaptersData)
-          } catch (e) {
-            console.error('Failed to parse chapters:', e)
-          }
-        }
-
-        const charactersData = window.localStorage.getItem(charactersKey)
-        if (charactersData) {
-          try {
-            projectData.characters = JSON.parse(charactersData)
-          } catch (e) {
-            console.error('Failed to parse characters:', e)
-          }
-        }
-
-        const worldSettingsData = window.localStorage.getItem(worldSettingsKey)
-        if (worldSettingsData) {
-          try {
-            projectData.worldSettings = JSON.parse(worldSettingsData)
-          } catch (e) {
-            console.error('Failed to parse world settings:', e)
-          }
-        }
-      }
     }
 
     // プロジェクトデータを保存
