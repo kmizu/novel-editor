@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 interface ProjectCardProps {
   project: Project
   isActive: boolean
-  onSelect: () => void
+  onSelect: () => void | Promise<void>
   onEdit: () => void
   onDelete: () => void
 }

@@ -2,6 +2,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useProjects } from '../hooks/useProjects'
 import { useTheme } from '../hooks/useTheme'
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
+import { ElectronMenuHandler } from './ElectronMenuHandler'
 import {
   HomeIcon,
   FolderIcon,
@@ -39,6 +40,7 @@ export default function Layout() {
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+      <ElectronMenuHandler />
       {/* サイドバー */}
       <div className="w-64 bg-white dark:bg-gray-800 shadow-lg">
         <div className="flex flex-col h-full">
