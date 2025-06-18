@@ -46,35 +46,41 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - エクスポート: プロジェクトをカクヨム形式、なろう形式としてエクスポート
 - 新規プロジェクト: 複数のプロジェクトを切り替えて作業
 
-## プロジェクトのセットアップ（予定）
+## プロジェクトのセットアップ
 
-現在はREADME.mdのみが存在し、実装はこれから開始されます。
-
-### 推奨される初期セットアップコマンド
+プロジェクトは既に実装済みです。以下のコマンドで開始できます：
 
 ```bash
-# Viteプロジェクトの作成
-npm create vite@latest . -- --template react-ts
-
 # 依存関係のインストール
 npm install
 
-# Tailwind CSSのセットアップ
-npm install -D tailwindcss postcss autoprefixer
-npx tailwindcss init -p
-
-# 開発用ライブラリ
-npm install -D @types/react @types/react-dom eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin
-```
-
-### 推奨される開発コマンド
-
-```bash
-# 開発サーバーの起動
+# Web版として開発
 npm run dev
 
-# ビルド
+# Electron版として開発（1つのコマンドで起動）
+npm run dev:electron
+
+# ビルド（Web版）
 npm run build
+
+# ビルド（Electron版）
+npm run build:electron
+```
+
+### 開発コマンド一覧
+
+```bash
+# Web版として開発サーバーを起動
+npm run dev
+
+# Electron版として開発（Viteとelectronを同時起動）
+npm run dev:electron
+
+# ビルド（Web版）
+npm run build
+
+# ビルド（Electron版、実行可能ファイルを作成）
+npm run build:electron
 
 # プレビュー
 npm run preview
@@ -88,14 +94,11 @@ npm run type-check
 # テスト実行
 npm run test
 
-# テスト（ウォッチモード）
-npm run test:watch
+# コードフォーマット
+npm run format
 
-# テストカバレッジ
-npm run test:coverage
-
-# E2Eテスト
-npm run test:e2e
+# 全チェック実行
+npm run check-all
 ```
 
 ## アーキテクチャ構造（推奨）
@@ -289,3 +292,37 @@ src/
 - [x] 統計データのエクスポート機能（JSON/CSV）
 - [x] 執筆時間帯分析
 - [x] グラフ表示（Recharts使用）
+
+### フェーズ12: Electronアプリ化
+
+- [x] Electron環境のセットアップ（electron, electron-builder等のインストール）
+- [x] Electronメインプロセス（main.js）の作成
+- [x] プリロードスクリプトの作成（セキュアなIPC通信）
+- [x] ファイルシステムAPIの実装（保存・読み込み・エクスポート）
+- [x] 既存のローカルストレージ保存をファイルシステム保存に移行
+- [x] メニューバーの実装（ファイル操作、編集メニュー等）
+- [x] 自動保存機能のファイルシステム対応
+- [x] ビルド設定とパッケージング設定
+- [x] 全機能の動作確認とテスト
+
+### Electronアプリ化で学んだこと
+- **ストレージ戦略の抽象化**: Web版とElectron版で異なるストレージ実装を持つため、StorageServiceインターフェースで抽象化
+- **IPC通信のセキュリティ**: contextBridgeとpreloadスクリプトを使用して、セキュアなIPC通信を実装
+- **型安全性の確保**: Electron APIの型定義を明確にし、anyの使用を最小限に抑える
+- **プラットフォーム判定**: window.electronAPIの存在でElectron環境かWeb環境かを判定
+- **ファイルシステムアクセス**: ローカルファイルへの直接的な読み書きが可能になり、.nepファイル形式でプロジェクトを保存
+- **開発体験の向上**: concurrentlyとwait-onを使用して、1つのコマンドでViteとElectronを同時起動
+- **electron-is-dev**: 開発環境と本番環境を自動判定し、適切な動作をする
+
+### Electron「名前を付けて保存」機能のデバッグ (2025-01-18)
+- **問題**: メニューから「名前を付けて保存」を選択してもファイル保存ダイアログが開かない
+- **調査内容**:
+  - IPCイベントの流れ: main.js → preload.js → ElectronMenuHandler の流れは正常
+  - activeProjectがnullの可能性を確認
+  - useProjectsフックがローカルストレージベースの実装を使用していることを発見
+- **デバッグ手法**:
+  - 各段階でconsole.logを追加して、データの流れを追跡
+  - activeProjectがない場合の代替案として、activeProjectIdから再取得する処理を追加
+- **今後の改善点**:
+  - useProjectsフックをElectron版でも動作するように修正が必要
+  - プロジェクトデータの管理をStorageServiceで統一する必要がある

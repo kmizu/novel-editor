@@ -107,7 +107,9 @@ export default function ProjectsPage() {
               key={project.id}
               project={project}
               isActive={activeProject?.id === project.id}
-              onSelect={() => setActiveProject(project.id)}
+              onSelect={() => {
+                setActiveProject(project.id)
+              }}
               onEdit={() => handleEditProject(project)}
               onDelete={() => handleDeleteProject(project.id)}
             />
