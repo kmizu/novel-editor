@@ -326,3 +326,14 @@ src/
 - **今後の改善点**:
   - useProjectsフックをElectron版でも動作するように修正が必要
   - プロジェクトデータの管理をStorageServiceで統一する必要がある
+
+### 「名前を付けて保存」が本文を保存しない問題の修正 (2025-06-18)
+- **根本原因**: 章データの保存と取得で異なるキーを使用していた
+  - `useChapters`フック: `StorageKeys.CHAPTERS`（全プロジェクトの章を一つのキーに保存）
+  - `storage.getChapters()`: `${STORAGE_PREFIX}chapters_${projectId}`（プロジェクトごとに別のキーで保存）
+- **修正内容**:
+  - `useChapters`フックを`storage.getChapters()`と`storage.saveChapters()`を使用するように変更
+  - これにより、章データの保存と取得が一貫性のあるキーを使用するようになった
+- **学んだこと**:
+  - データの保存と取得で一貫性のあるキーを使用することの重要性
+  - ストレージ関数を一元化して使用することで、このような問題を防ぐことができる

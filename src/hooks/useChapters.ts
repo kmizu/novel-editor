@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Chapter } from '../types/project'
-import { StorageManager, StorageKeys } from '../utils/storage'
+import { storage } from '../utils/storage'
 import { generateId, countCharacters } from '../utils/helpers'
 
 export const useChapters = (projectId: string | null) => {
@@ -23,10 +23,7 @@ export const useChapters = (projectId: string | null) => {
 
     try {
       setLoading(true)
-      const allChapters = StorageManager.get<Chapter[]>(StorageKeys.CHAPTERS) || []
-      const projectChapters = allChapters
-        .filter((chapter) => chapter.projectId === projectId)
-        .sort((a, b) => a.order - b.order)
+      const projectChapters = storage.getChapters(projectId).sort((a, b) => a.order - b.order)
 
       setChapters(projectChapters)
       setError(null)
@@ -43,7 +40,7 @@ export const useChapters = (projectId: string | null) => {
       if (!projectId) return null
 
       try {
-        const allChapters = StorageManager.get<Chapter[]>(StorageKeys.CHAPTERS) || []
+        const currentChapters = storage.getChapters(projectId)
         const newChapter: Chapter = {
           ...chapterData,
           id: generateId(),
@@ -52,13 +49,12 @@ export const useChapters = (projectId: string | null) => {
           updatedAt: new Date().toISOString(),
         }
 
-        const updatedChapters = [...allChapters, newChapter]
-        StorageManager.set(StorageKeys.CHAPTERS, updatedChapters)
+        const updatedChapters = [...currentChapters, newChapter]
+        storage.saveChapters(projectId, updatedChapters)
 
-        const projectChapters = updatedChapters
-          .filter((chapter) => chapter.projectId === projectId)
-          .sort((a, b) => a.order - b.order)
+        const projectChapters = updatedChapters.sort((a, b) => a.order - b.order)
         setChapters(projectChapters)
+        setError(null)
 
         return newChapter
       } catch (err) {
@@ -72,9 +68,11 @@ export const useChapters = (projectId: string | null) => {
 
   const updateChapter = useCallback(
     (chapterId: string, updates: Partial<Chapter>) => {
+      if (!projectId) return false
+
       try {
-        const allChapters = StorageManager.get<Chapter[]>(StorageKeys.CHAPTERS) || []
-        const updatedChapters = allChapters.map((chapter) =>
+        const currentChapters = storage.getChapters(projectId)
+        const updatedChapters = currentChapters.map((chapter) =>
           chapter.id === chapterId
             ? {
                 ...chapter,
@@ -85,14 +83,11 @@ export const useChapters = (projectId: string | null) => {
             : chapter
         )
 
-        StorageManager.set(StorageKeys.CHAPTERS, updatedChapters)
+        storage.saveChapters(projectId, updatedChapters)
 
-        if (projectId) {
-          const projectChapters = updatedChapters
-            .filter((chapter) => chapter.projectId === projectId)
-            .sort((a, b) => a.order - b.order)
-          setChapters(projectChapters)
-        }
+        const projectChapters = updatedChapters.sort((a, b) => a.order - b.order)
+        setChapters(projectChapters)
+        setError(null)
 
         return true
       } catch (err) {
@@ -106,17 +101,16 @@ export const useChapters = (projectId: string | null) => {
 
   const deleteChapter = useCallback(
     (chapterId: string) => {
-      try {
-        const allChapters = StorageManager.get<Chapter[]>(StorageKeys.CHAPTERS) || []
-        const updatedChapters = allChapters.filter((chapter) => chapter.id !== chapterId)
-        StorageManager.set(StorageKeys.CHAPTERS, updatedChapters)
+      if (!projectId) return false
 
-        if (projectId) {
-          const projectChapters = updatedChapters
-            .filter((chapter) => chapter.projectId === projectId)
-            .sort((a, b) => a.order - b.order)
-          setChapters(projectChapters)
-        }
+      try {
+        const currentChapters = storage.getChapters(projectId)
+        const updatedChapters = currentChapters.filter((chapter) => chapter.id !== chapterId)
+        storage.saveChapters(projectId, updatedChapters)
+
+        const projectChapters = updatedChapters.sort((a, b) => a.order - b.order)
+        setChapters(projectChapters)
+        setError(null)
 
         return true
       } catch (err) {
@@ -130,9 +124,11 @@ export const useChapters = (projectId: string | null) => {
 
   const reorderChapters = useCallback(
     (chapterIds: string[]) => {
+      if (!projectId) return false
+
       try {
-        const allChapters = StorageManager.get<Chapter[]>(StorageKeys.CHAPTERS) || []
-        const updatedChapters = allChapters.map((chapter) => {
+        const currentChapters = storage.getChapters(projectId)
+        const updatedChapters = currentChapters.map((chapter) => {
           const newOrder = chapterIds.indexOf(chapter.id)
           if (newOrder !== -1) {
             return { ...chapter, order: newOrder }
@@ -140,14 +136,11 @@ export const useChapters = (projectId: string | null) => {
           return chapter
         })
 
-        StorageManager.set(StorageKeys.CHAPTERS, updatedChapters)
+        storage.saveChapters(projectId, updatedChapters)
 
-        if (projectId) {
-          const projectChapters = updatedChapters
-            .filter((chapter) => chapter.projectId === projectId)
-            .sort((a, b) => a.order - b.order)
-          setChapters(projectChapters)
-        }
+        const projectChapters = updatedChapters.sort((a, b) => a.order - b.order)
+        setChapters(projectChapters)
+        setError(null)
 
         return true
       } catch (err) {

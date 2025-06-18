@@ -112,10 +112,15 @@ export class ElectronStorageService implements StorageService {
     try {
       // 動的インポートでstorage.tsを取得
       const { storage } = await import('../utils/storage')
-      
+
       // 章データを取得（個別に保存されている）
       projectData.chapters = storage.getChapters(project.id) || []
-      
+      console.log('Retrieved chapters from storage:', {
+        projectId: project.id,
+        chaptersCount: projectData.chapters.length,
+        chapters: projectData.chapters,
+      })
+
       // キャラクターデータを取得
       const charactersKey = `novel_editor_characters_${project.id}`
       const charactersData = localStorage.getItem(charactersKey)
@@ -126,7 +131,7 @@ export class ElectronStorageService implements StorageService {
           console.error('Failed to parse characters:', e)
         }
       }
-      
+
       // 世界観データを取得
       const worldSettingsKey = `novel_editor_world_settings_${project.id}`
       const worldSettingsData = localStorage.getItem(worldSettingsKey)
@@ -137,7 +142,7 @@ export class ElectronStorageService implements StorageService {
           console.error('Failed to parse world settings:', e)
         }
       }
-      
+
       // プロットデータを取得
       const plotKey = `novel_editor_plots_${project.id}`
       const plotData = localStorage.getItem(plotKey)
@@ -148,10 +153,10 @@ export class ElectronStorageService implements StorageService {
           console.error('Failed to parse plot:', e)
         }
       }
-      
+
       // あらすじはプロジェクトに含まれている
       projectData.synopsis = project.synopsis || ''
-      
+
       console.log('Project data to save:', {
         projectId: project.id,
         title: project.title,
@@ -159,7 +164,7 @@ export class ElectronStorageService implements StorageService {
         charactersCount: projectData.characters?.length || 0,
         worldSettingsCount: projectData.worldSettings?.length || 0,
         hasPlot: !!projectData.plot,
-        hasSynopsis: !!projectData.synopsis
+        hasSynopsis: !!projectData.synopsis,
       })
     } catch (e) {
       console.error('Failed to get project data from storage:', e)
