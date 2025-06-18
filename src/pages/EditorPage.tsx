@@ -1,28 +1,48 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useProjects } from '../hooks/useProjects'
 import { useChapters } from '../hooks/useChapters'
+import { usePlots } from '../hooks/usePlots'
 import { useAutoSave } from '../hooks/useAutoSave'
+import { useVersionControl } from '../hooks/useVersionControl'
+import { useAutoVersioning } from '../hooks/useAutoVersioning'
+import { calculateDiff } from '../utils/diff'
+import { Link } from 'react-router-dom'
+import { useWritingSession } from '../hooks/useWritingSession'
 import {
   PlusIcon,
   Bars3BottomLeftIcon,
   XMarkIcon,
   DocumentTextIcon,
+  BookOpenIcon,
+  ClockIcon,
+  ChartBarIcon,
 } from '@heroicons/react/24/outline'
 import ChapterList from '../components/editor/ChapterList'
 import { TextEditor } from '../components/editor/TextEditor'
+import PlotReference from '../components/editor/PlotReference'
+import VersionHistory from '../components/version/VersionHistory'
+import VersionDiff from '../components/version/VersionDiff'
+import VoiceInputButton from '../components/voice/VoiceInputButton'
+import TextToSpeechControls from '../components/voice/TextToSpeechControls'
 
 export default function EditorPage() {
   const { activeProject } = useProjects()
   const { chapters, createChapter, updateChapter, deleteChapter, reorderChapters } = useChapters(
     activeProject?.id || null
   )
+  const { plots } = usePlots(activeProject?.id || null)
   const [selectedChapterId, setSelectedChapterId] = useState<string>('')
   const [content, setContent] = useState('')
   const [isCreatingChapter, setIsCreatingChapter] = useState(false)
   const [newChapterTitle, setNewChapterTitle] = useState('')
   const [showSidebar, setShowSidebar] = useState(true)
   const [showMemo, setShowMemo] = useState(false)
+  const [showPlot, setShowPlot] = useState(false)
+  const [showVersion, setShowVersion] = useState(false)
   const [memoContent, setMemoContent] = useState('')
+  const [comparedVersionDiff, setComparedVersionDiff] = useState<ReturnType<
+    typeof calculateDiff
+  > | null>(null)
 
   // 選択中の章（メモ化）
   const selectedChapter = useMemo(
@@ -35,6 +55,20 @@ export default function EditorPage() {
     return text.replace(/\s/g, '').length
   }, [])
 
+  // バージョン管理
+  const versionControl = useVersionControl(selectedChapterId, 'chapter', content)
+
+  // 自動バージョン保存
+  const { manualSave } = useAutoVersioning({
+    content,
+    settings: versionControl.settings,
+    onCreateVersion: versionControl.createVersion,
+    enabled: !!selectedChapterId,
+  })
+
+  // 執筆セッション管理
+  useWritingSession(activeProject?.id || '', selectedChapterId, content)
+
   // 自動保存設定（本文）
   const {
     isSaving,
@@ -43,7 +77,8 @@ export default function EditorPage() {
   } = useAutoSave({
     onSave: () => {
       if (selectedChapter && content !== selectedChapter.content) {
-        updateChapter(selectedChapterId, { content, wordCount: countCharacters(content) })
+        const characterCount = countCharacters(content)
+        updateChapter(selectedChapterId, { content, wordCount: characterCount })
       }
     },
     delay: 3000, // 3秒に延長
@@ -76,6 +111,29 @@ export default function EditorPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChapterId]) // selectedChapterIdの変更のみを監視
+
+  // バージョンの復元
+  const handleRestoreVersion = useCallback(
+    (versionId: string) => {
+      const restoredContent = versionControl.restoreVersion(versionId)
+      if (restoredContent !== null) {
+        setContent(restoredContent)
+        manualSave('バージョン復元')
+      }
+    },
+    [versionControl, manualSave]
+  )
+
+  // バージョンの比較
+  const handleCompareVersions = useCallback(
+    (versionId1: string, versionId2: string) => {
+      const diff = versionControl.compareVersions(versionId1, versionId2)
+      if (diff) {
+        setComparedVersionDiff(diff)
+      }
+    },
+    [versionControl]
+  )
 
   // 新しい章を作成（メモ化）
   const handleCreateChapter = useCallback(() => {
@@ -206,6 +264,36 @@ export default function EditorPage() {
             </div>
 
             <div className="flex items-center space-x-4">
+              {activeProject && (
+                <Link
+                  to={`/projects/${activeProject.id}/statistics`}
+                  className="flex items-center space-x-1 px-3 py-1 rounded text-gray-600 hover:bg-gray-100"
+                  title="統計を表示"
+                >
+                  <ChartBarIcon className="w-4 h-4" />
+                  <span className="text-sm">統計</span>
+                </Link>
+              )}
+              <button
+                onClick={() => setShowVersion(!showVersion)}
+                className={`flex items-center space-x-1 px-3 py-1 rounded ${
+                  showVersion ? 'bg-orange-100 text-orange-700' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+                title="バージョン履歴"
+              >
+                <ClockIcon className="w-4 h-4" />
+                <span className="text-sm">履歴</span>
+              </button>
+              <button
+                onClick={() => setShowPlot(!showPlot)}
+                className={`flex items-center space-x-1 px-3 py-1 rounded ${
+                  showPlot ? 'bg-purple-100 text-purple-700' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+                title="プロット参照"
+              >
+                <BookOpenIcon className="w-4 h-4" />
+                <span className="text-sm">プロット</span>
+              </button>
               <button
                 onClick={() => setShowMemo(!showMemo)}
                 className={`flex items-center space-x-1 px-3 py-1 rounded ${
@@ -216,6 +304,14 @@ export default function EditorPage() {
                 <DocumentTextIcon className="w-4 h-4" />
                 <span className="text-sm">メモ</span>
               </button>
+              <div className="flex items-center border-l pl-4 ml-2 space-x-2">
+                <VoiceInputButton
+                  onTranscript={(text) => {
+                    setContent((prev) => prev + text)
+                  }}
+                />
+                <TextToSpeechControls text={content} />
+              </div>
               <span className="text-sm text-gray-600">
                 文字数: {selectedChapter ? countCharacters(content).toLocaleString() : 0}
               </span>
@@ -233,7 +329,46 @@ export default function EditorPage() {
         <div className="flex-1 bg-gray-50 p-6">
           {selectedChapter ? (
             <div className="max-w-4xl mx-auto h-full">
-              {showMemo ? (
+              {showVersion ? (
+                <div className="h-full flex space-x-4">
+                  {/* 本文エリア */}
+                  <div className="flex-1">
+                    <TextEditor
+                      content={content}
+                      onChange={setContent}
+                      className="h-full p-6 bg-white dark:bg-gray-800"
+                    />
+                  </div>
+                  {/* バージョン履歴エリア */}
+                  <div className="w-96 bg-white rounded-lg shadow-sm border border-gray-200">
+                    {comparedVersionDiff ? (
+                      <div className="h-full flex flex-col">
+                        <div className="p-2 border-b">
+                          <button
+                            onClick={() => setComparedVersionDiff(null)}
+                            className="text-sm text-blue-600 hover:text-blue-800"
+                          >
+                            ← 履歴に戻る
+                          </button>
+                        </div>
+                        <div className="flex-1">
+                          <VersionDiff diff={comparedVersionDiff} />
+                        </div>
+                      </div>
+                    ) : (
+                      <VersionHistory
+                        versions={versionControl.history.versions}
+                        currentVersionId={versionControl.history.currentVersionId}
+                        onRestore={handleRestoreVersion}
+                        onCompare={handleCompareVersions}
+                        onDelete={versionControl.deleteVersion}
+                        onAddTag={versionControl.addTag}
+                        onRemoveTag={versionControl.removeTag}
+                      />
+                    )}
+                  </div>
+                </div>
+              ) : showMemo || showPlot ? (
                 <div className="h-full flex flex-col space-y-4">
                   {/* 本文エリア */}
                   <div className="flex-1">
@@ -243,29 +378,41 @@ export default function EditorPage() {
                       className="h-full p-6 bg-white dark:bg-gray-800"
                     />
                   </div>
-                  {/* メモエリア */}
-                  <div className="h-1/3">
-                    <div className="h-full bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          各話メモ
-                        </h3>
-                        <button
-                          onClick={() => setShowMemo(false)}
-                          className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-                        >
-                          <XMarkIcon className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <textarea
-                        className="w-full h-[calc(100%-2rem)] p-3 bg-transparent resize-none focus:outline-none dark:text-white"
-                        placeholder="この章に関するメモやアイデアを記入..."
-                        value={memoContent}
-                        onChange={(e) => setMemoContent(e.target.value)}
-                        style={{ fontFamily: 'sans-serif', fontSize: '14px' }}
+                  {/* プロット参照エリア */}
+                  {showPlot && (
+                    <div className="h-1/3">
+                      <PlotReference
+                        plots={plots}
+                        chapterId={selectedChapterId}
+                        onClose={() => setShowPlot(false)}
                       />
                     </div>
-                  </div>
+                  )}
+                  {/* メモエリア */}
+                  {showMemo && !showPlot && (
+                    <div className="h-1/3">
+                      <div className="h-full bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            各話メモ
+                          </h3>
+                          <button
+                            onClick={() => setShowMemo(false)}
+                            className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                          >
+                            <XMarkIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <textarea
+                          className="w-full h-[calc(100%-2rem)] p-3 bg-transparent resize-none focus:outline-none dark:text-white"
+                          placeholder="この章に関するメモやアイデアを記入..."
+                          value={memoContent}
+                          onChange={(e) => setMemoContent(e.target.value)}
+                          style={{ fontFamily: 'sans-serif', fontSize: '14px' }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <TextEditor

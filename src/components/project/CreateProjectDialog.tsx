@@ -1,7 +1,8 @@
-import { useState, Fragment } from 'react'
+import { useState, Fragment, useEffect } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import { Project } from '../../types/project'
+import { WritingTemplate } from '../../types/template'
 
 interface CreateProjectDialogProps {
   isOpen: boolean
@@ -20,12 +21,14 @@ interface CreateProjectDialogProps {
       | 'exportSettings'
     >
   ) => void
+  template?: WritingTemplate | null
 }
 
 export default function CreateProjectDialog({
   isOpen,
   onClose,
   onCreate,
+  template,
 }: CreateProjectDialogProps) {
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
@@ -34,6 +37,22 @@ export default function CreateProjectDialog({
   const [genre, setGenre] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
+
+  // テンプレートが選択されている場合、初期値を設定
+  useEffect(() => {
+    if (template && template.id !== 'blank' && template.projectTemplate) {
+      const pt = template.projectTemplate
+      if (pt.title) setTitle(pt.title)
+      if (pt.genre) setGenre(pt.genre)
+      if (pt.synopsis) setSynopsis(pt.synopsis)
+      if (pt.keywords) setTags(pt.keywords)
+
+      // テンプレート名から説明を生成
+      if (template.name && !description) {
+        setDescription(`${template.name}テンプレートを使用したプロジェクト`)
+      }
+    }
+  }, [template, description])
 
   const handleSubmit = () => {
     if (title.trim() && author.trim()) {

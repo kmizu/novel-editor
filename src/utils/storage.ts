@@ -11,6 +11,7 @@ export const StorageKeys = {
   MEMOS: `${STORAGE_PREFIX}memos`,
   ACTIVE_PROJECT: `${STORAGE_PREFIX}active_project`,
   USER_PREFERENCES: `${STORAGE_PREFIX}preferences`,
+  VERSION_SETTINGS: `${STORAGE_PREFIX}version_settings`,
 } as const
 
 interface ProjectData {

@@ -1,5 +1,6 @@
 import { Project } from '../../types/project'
-import { PencilIcon, TrashIcon, FolderOpenIcon } from '@heroicons/react/24/outline'
+import { PencilIcon, TrashIcon, FolderOpenIcon, ChartBarIcon } from '@heroicons/react/24/outline'
+import { Link } from 'react-router-dom'
 
 interface ProjectCardProps {
   project: Project
@@ -33,6 +34,14 @@ export default function ProjectCard({
           <p className="text-sm text-gray-600">{project.author}</p>
         </div>
         <div className="flex space-x-2 ml-4">
+          <Link
+            to={`/projects/${project.id}/statistics`}
+            onClick={(e) => e.stopPropagation()}
+            className="p-1 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded"
+            title="統計"
+          >
+            <ChartBarIcon className="w-5 h-5" />
+          </Link>
           <button
             onClick={(e) => {
               e.stopPropagation()

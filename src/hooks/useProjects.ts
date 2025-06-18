@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Project } from '../types/project'
+import { Project, Chapter, Character, Plot, WorldSetting } from '../types/project'
 import { storage } from '../utils/storage'
 
 export const useProjects = () => {
@@ -123,6 +123,89 @@ export const useProjects = () => {
     return projects.find((project) => project.id === activeProjectId) || null
   }, [projects, activeProjectId])
 
+  const importProject = useCallback(
+    (shareData: {
+      version: string
+      project: Project
+      chapters: Chapter[]
+      characters: Character[]
+      plots: Plot[]
+      worldSettings: WorldSetting[]
+      exportedAt: string
+    }) => {
+      try {
+        // 新しいプロジェクトIDを生成
+        const newProjectId = crypto.randomUUID()
+        const now = new Date().toISOString()
+
+        // プロジェクトデータを新しいIDで作成
+        const importedProject: Project = {
+          ...shareData.project,
+          id: newProjectId,
+          title: `${shareData.project.title} (インポート)`,
+          createdAt: now,
+          updatedAt: now,
+        }
+
+        // 各種データのIDを新しいプロジェクトIDに更新
+        const importedChapters = shareData.chapters.map((chapter) => ({
+          ...chapter,
+          projectId: newProjectId,
+        }))
+
+        const importedCharacters = shareData.characters.map((character) => ({
+          ...character,
+          projectId: newProjectId,
+        }))
+
+        const importedPlots = shareData.plots.map((plot) => ({
+          ...plot,
+          projectId: newProjectId,
+        }))
+
+        const importedWorldSettings = shareData.worldSettings.map((setting) => ({
+          ...setting,
+          projectId: newProjectId,
+        }))
+
+        // プロジェクトリストに追加
+        const updatedProjects = [...projects, importedProject]
+        storage.saveProjects(updatedProjects)
+        setProjects(updatedProjects)
+
+        // プロジェクトデータを保存
+        storage.saveProject({
+          project: importedProject,
+          chapters: importedChapters,
+          characters: importedCharacters,
+          worldSettings: importedWorldSettings,
+          plot: '',
+          synopsis: importedProject.synopsis || '',
+        })
+
+        // 個別のデータも保存
+        const chaptersKey = `novel_editor_chapters_${newProjectId}`
+        const charactersKey = `novel_editor_characters_${newProjectId}`
+        const plotsKey = `novel_editor_plots_${newProjectId}`
+        const worldSettingsKey = `novel_editor_world_settings_${newProjectId}`
+
+        localStorage.setItem(chaptersKey, JSON.stringify(importedChapters))
+        localStorage.setItem(charactersKey, JSON.stringify(importedCharacters))
+        localStorage.setItem(plotsKey, JSON.stringify(importedPlots))
+        localStorage.setItem(worldSettingsKey, JSON.stringify(importedWorldSettings))
+
+        // インポートしたプロジェクトをアクティブに設定
+        setActiveProject(newProjectId)
+
+        return { success: true, projectId: newProjectId }
+      } catch (err) {
+        console.error('Error importing project:', err)
+        return { success: false, error: 'プロジェクトのインポートに失敗しました' }
+      }
+    },
+    [projects, setActiveProject]
+  )
+
   const currentProject = getActiveProject()
 
   return {
@@ -136,6 +219,7 @@ export const useProjects = () => {
     updateProject,
     deleteProject,
     setActiveProject,
+    importProject,
     reloadProjects: loadProjects,
   }
 }

@@ -13,6 +13,8 @@ import {
   CogIcon,
   SunIcon,
   MoonIcon,
+  PuzzlePieceIcon,
+  UsersIcon,
 } from '@heroicons/react/24/outline'
 
 const navigation = [
@@ -22,6 +24,9 @@ const navigation = [
   { name: 'プロット', href: '/plot', icon: ChartBarIcon },
   { name: 'キャラクター', href: '/characters', icon: UserGroupIcon },
   { name: '世界観', href: '/world-building', icon: GlobeAltIcon },
+  { name: '統計', href: '/statistics', icon: ChartBarIcon },
+  { name: '共同執筆', href: '/collaboration', icon: UsersIcon },
+  { name: 'プラグイン', href: '/plugins', icon: PuzzlePieceIcon },
   { name: 'エクスポート', href: '/export', icon: ArrowDownTrayIcon },
   { name: '設定', href: '/settings', icon: CogIcon },
 ]

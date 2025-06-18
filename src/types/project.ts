@@ -35,6 +35,9 @@ export interface Plot {
   order: number
   createdAt: string
   updatedAt: string
+  completed?: boolean
+  progress?: number // 0-100
+  linkedChapterIds?: string[] // 関連する章のID
 }
 
 export interface Character {

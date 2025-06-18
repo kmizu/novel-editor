@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Plot } from '../../types/project'
 import { useAutoSave } from '../../hooks/useAutoSave'
 import { PlusIcon, TrashIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
+import PlotProgress from './PlotProgress'
 
 interface PlotEditorProps {
   plots: Plot[]
@@ -126,22 +127,37 @@ export default function PlotEditor({
     <div
       key={plot.id}
       className={`
-        flex items-center justify-between px-3 py-2 rounded cursor-pointer group
+        px-3 py-2 rounded cursor-pointer group
         ${selectedPlotId === plot.id ? 'bg-blue-50 border border-blue-300' : 'hover:bg-gray-100'}
       `}
       onClick={() => setSelectedPlotId(plot.id)}
     >
-      <span className="text-sm truncate">{plot.title}</span>
-      {showDelete && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            handleDeletePlot(plot.id)
-          }}
-          className="p-1 text-red-600 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          <TrashIcon className="w-4 h-4" />
-        </button>
+      <div className="flex items-center justify-between">
+        <span className="text-sm truncate flex-1">{plot.title}</span>
+        <div className="flex items-center space-x-2">
+          {plot.completed && <span className="text-xs text-green-600 font-medium">完了</span>}
+          {showDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleDeletePlot(plot.id)
+              }}
+              className="p-1 text-red-600 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <TrashIcon className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+      {plot.progress !== undefined && plot.progress > 0 && (
+        <div className="mt-1">
+          <div className="w-full bg-gray-200 rounded-full h-1">
+            <div
+              className={`h-1 rounded-full ${plot.completed ? 'bg-green-500' : 'bg-blue-500'}`}
+              style={{ width: `${plot.progress}%` }}
+            />
+          </div>
+        </div>
       )}
     </div>
   )
@@ -335,9 +351,23 @@ export default function PlotEditor({
 
         <div className="flex-1 bg-gray-50 p-6">
           {selectedPlot ? (
-            <div className="max-w-4xl mx-auto h-full">
+            <div className="max-w-4xl mx-auto h-full flex flex-col space-y-4">
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <PlotProgress
+                  plot={selectedPlot}
+                  onToggleComplete={(plotId, completed) => {
+                    onUpdatePlot(plotId, {
+                      completed,
+                      progress: completed ? 100 : selectedPlot.progress,
+                    })
+                  }}
+                  onUpdateProgress={(plotId, progress) => {
+                    onUpdatePlot(plotId, { progress, completed: progress === 100 })
+                  }}
+                />
+              </div>
               <textarea
-                className="w-full h-full p-6 bg-white border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="flex-1 p-6 bg-white border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="プロットの内容を入力してください..."
                 value={content}
                 onChange={(e) => setContent(e.target.value)}

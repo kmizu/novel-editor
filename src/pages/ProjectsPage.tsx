@@ -1,15 +1,21 @@
 import { useState } from 'react'
 import { useProjects } from '../hooks/useProjects'
+import { useTemplates } from '../hooks/useTemplates'
 import ProjectCard from '../components/project/ProjectCard'
 import CreateProjectDialog from '../components/project/CreateProjectDialog'
 import ProjectEditDialog from '../components/project/ProjectEditDialog'
+import TemplateSelector from '../components/templates/TemplateSelector'
 import { PlusIcon, FolderOpenIcon } from '@heroicons/react/24/outline'
 import { Project } from '../types/project'
+import { WritingTemplate } from '../types/template'
 
 export default function ProjectsPage() {
   const { projects, activeProject, createProject, updateProject, deleteProject, setActiveProject } =
     useProjects()
+  const { allTemplates } = useTemplates()
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false)
+  const [selectedTemplate, setSelectedTemplate] = useState<WritingTemplate | null>(null)
   const [editingProject, setEditingProject] = useState<Project | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -60,7 +66,7 @@ export default function ProjectsPage() {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">プロジェクト管理</h2>
         <button
-          onClick={() => setIsCreateDialogOpen(true)}
+          onClick={() => setShowTemplateSelector(true)}
           className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
         >
           <PlusIcon className="w-5 h-5 mr-2" />
@@ -86,7 +92,7 @@ export default function ProjectsPage() {
           </p>
           {!searchTerm && (
             <button
-              onClick={() => setIsCreateDialogOpen(true)}
+              onClick={() => setShowTemplateSelector(true)}
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
               <PlusIcon className="w-5 h-5 mr-2" />
@@ -109,10 +115,26 @@ export default function ProjectsPage() {
         </div>
       )}
 
+      {showTemplateSelector && (
+        <TemplateSelector
+          templates={allTemplates}
+          onSelect={(template) => {
+            setSelectedTemplate(template)
+            setShowTemplateSelector(false)
+            setIsCreateDialogOpen(true)
+          }}
+          onCancel={() => setShowTemplateSelector(false)}
+        />
+      )}
+
       <CreateProjectDialog
         isOpen={isCreateDialogOpen}
-        onClose={() => setIsCreateDialogOpen(false)}
+        onClose={() => {
+          setIsCreateDialogOpen(false)
+          setSelectedTemplate(null)
+        }}
         onCreate={handleCreateProject}
+        template={selectedTemplate}
       />
 
       <ProjectEditDialog

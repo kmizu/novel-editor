@@ -8,6 +8,9 @@ import CharactersPage from './pages/CharactersPage'
 import WorldBuildingPage from './pages/WorldBuildingPage'
 import ExportPage from './pages/ExportPage'
 import SettingsPage from './pages/SettingsPage'
+import StatisticsPage from './pages/StatisticsPage'
+import PluginsPage from './pages/PluginsPage'
+import CollaborationPage from './pages/CollaborationPage'
 
 export const router = createBrowserRouter([
   {
@@ -45,6 +48,18 @@ export const router = createBrowserRouter([
       {
         path: 'settings',
         element: <SettingsPage />,
+      },
+      {
+        path: 'statistics',
+        element: <StatisticsPage />,
+      },
+      {
+        path: 'plugins',
+        element: <PluginsPage />,
+      },
+      {
+        path: 'collaboration',
+        element: <CollaborationPage />,
       },
     ],
   },
