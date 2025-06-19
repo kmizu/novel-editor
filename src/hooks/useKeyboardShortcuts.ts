@@ -79,14 +79,35 @@ export function useKeyboardShortcuts() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [navigate, currentProject])
 
+
+  const allShortcuts = [
+    // ナビゲーション
+    { keys: 'Ctrl+E', description: 'エディタを開く', category: 'navigation' },
+    { keys: 'Ctrl+P', description: 'プロット管理を開く', category: 'navigation' },
+    { keys: 'Ctrl+K', description: 'キャラクター管理を開く', category: 'navigation' },
+    { keys: 'Ctrl+W', description: '世界観設定を開く', category: 'navigation' },
+    { keys: 'Ctrl+H', description: 'ホームに戻る', category: 'navigation' },
+    // エディタ
+    { keys: 'Ctrl+F', description: '検索', category: 'editor' },
+    { keys: 'Ctrl+Shift+H', description: '置換', category: 'editor' },
+    { keys: 'Ctrl+↑', description: '前の章へ移動', category: 'editor' },
+    { keys: 'Ctrl+↓', description: '次の章へ移動', category: 'editor' },
+    // ファイル操作
+    { keys: 'Ctrl+S', description: '保存', category: 'file' },
+    { keys: 'Ctrl+Shift+E', description: 'エクスポート', category: 'file' },
+    { keys: 'Ctrl+N', description: '新しい章を作成', category: 'file' },
+    // ヘルプ
+    { keys: 'Ctrl+?', description: 'ショートカット一覧を表示', category: 'help' },
+    { keys: 'F1', description: 'ヘルプを表示', category: 'help' },
+  ]
+
   return {
-    shortcuts: [
-      { keys: 'Ctrl+E', description: 'エディタを開く' },
-      { keys: 'Ctrl+P', description: 'プロット管理を開く' },
-      { keys: 'Ctrl+K', description: 'キャラクター管理を開く' },
-      { keys: 'Ctrl+W', description: '世界観設定を開く' },
-      { keys: 'Ctrl+S', description: '保存' },
-      { keys: 'Ctrl+H', description: 'ホームに戻る' },
-    ],
+    shortcuts: allShortcuts,
+    categories: {
+      navigation: 'ナビゲーション',
+      editor: 'エディタ',
+      file: 'ファイル操作',
+      help: 'ヘルプ',
+    },
   }
 }

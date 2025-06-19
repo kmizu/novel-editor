@@ -24,6 +24,7 @@ import VersionHistory from '../components/version/VersionHistory'
 import VersionDiff from '../components/version/VersionDiff'
 import VoiceInputButton from '../components/voice/VoiceInputButton'
 import TextToSpeechControls from '../components/voice/TextToSpeechControls'
+import { SearchReplace } from '../components/editor/SearchReplace'
 
 export default function EditorPage() {
   const { activeProject } = useProjects()
@@ -43,6 +44,8 @@ export default function EditorPage() {
   const [comparedVersionDiff, setComparedVersionDiff] = useState<ReturnType<
     typeof calculateDiff
   > | null>(null)
+  const [showSearch, setShowSearch] = useState(false)
+  const [searchMode, setSearchMode] = useState<'search' | 'replace'>('search')
 
   // 選択中の章（メモ化）
   const selectedChapter = useMemo(
@@ -68,6 +71,42 @@ export default function EditorPage() {
 
   // 執筆セッション管理
   useWritingSession(activeProject?.id || '', selectedChapterId, content)
+
+  // 検索・置換イベントのリスナー
+  useEffect(() => {
+    const handleOpenSearch = () => {
+      setShowSearch(true)
+      setSearchMode('search')
+    }
+    const handleOpenReplace = () => {
+      setShowSearch(true)
+      setSearchMode('replace')
+    }
+    const handleNavigateChapter = (e: CustomEvent) => {
+      const direction = e.detail.direction
+      const currentIndex = chapters.findIndex(ch => ch.id === selectedChapterId)
+      if (direction === 'prev' && currentIndex > 0) {
+        setSelectedChapterId(chapters[currentIndex - 1].id)
+      } else if (direction === 'next' && currentIndex < chapters.length - 1) {
+        setSelectedChapterId(chapters[currentIndex + 1].id)
+      }
+    }
+    const handleCreateNewChapter = () => {
+      setIsCreatingChapter(true)
+    }
+
+    window.addEventListener('open-search', handleOpenSearch)
+    window.addEventListener('open-replace', handleOpenReplace)
+    window.addEventListener('navigate-chapter', handleNavigateChapter as EventListener)
+    window.addEventListener('create-new-chapter', handleCreateNewChapter)
+
+    return () => {
+      window.removeEventListener('open-search', handleOpenSearch)
+      window.removeEventListener('open-replace', handleOpenReplace)
+      window.removeEventListener('navigate-chapter', handleNavigateChapter as EventListener)
+      window.removeEventListener('create-new-chapter', handleCreateNewChapter)
+    }
+  }, [chapters, selectedChapterId])
 
   // 自動保存設定（本文）
   const {
@@ -164,6 +203,15 @@ export default function EditorPage() {
 
   return (
     <div className="h-full flex">
+      {/* 検索・置換 */}
+      <SearchReplace
+        text={content}
+        onReplace={setContent}
+        isOpen={showSearch}
+        onClose={() => setShowSearch(false)}
+        mode={searchMode}
+      />
+      
       {/* サイドバー */}
       {showSidebar && (
         <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
