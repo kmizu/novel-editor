@@ -1,0 +1,297 @@
+@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@300;400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   墨 (Sumi) Design System — Global Styles
+   ============================================================ */
+
+@layer base {
+  :root {
+    --grain-opacity: 0.04;
+  }
+
+  html {
+    font-family: 'Zen Kaku Gothic New', '游ゴシック', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-paper text-ink min-h-screen;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  }
+
+  /* ダークモード */
+  html.dark body {
+    @apply bg-night text-paper;
+  }
+
+  /* スクロールバー */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-ash/40 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-ash/70;
+  }
+
+  html.dark ::-webkit-scrollbar-thumb {
+    @apply bg-ash-dark/40;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(140, 123, 110, 0.4) transparent;
+  }
+
+  /* 選択色 */
+  ::selection {
+    @apply bg-vermillion/20 text-ink;
+  }
+
+  html.dark ::selection {
+    @apply bg-vermillion/30 text-paper;
+  }
+
+  /* フォームベース */
+  textarea, input[type="text"], input[type="search"] {
+    @apply bg-transparent outline-none;
+  }
+}
+
+@layer components {
+  /* ============================================================
+     縦書きエディタ
+     ============================================================ */
+  .editor-vertical {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-feature-settings: "vert" 1, "vrt2" 1;
+    font-family: 'Shippori Mincho', '游明朝', serif;
+    line-height: 2.2;
+    letter-spacing: 0.08em;
+    overflow-x: auto;
+    overflow-y: hidden;
+    height: 100%;
+    min-width: 100%;
+    word-break: break-all;
+  }
+
+  .editor-horizontal {
+    writing-mode: horizontal-tb;
+    font-family: 'Shippori Mincho', '游明朝', serif;
+    line-height: 2.0;
+    letter-spacing: 0.02em;
+    overflow-y: auto;
+    overflow-x: hidden;
+    resize: none;
+    width: 100%;
+  }
+
+  /* ============================================================
+     縦書きプレビュー
+     ============================================================ */
+  .preview-vertical {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-feature-settings: "vert" 1, "vrt2" 1;
+    font-family: 'Shippori Mincho', '游明朝', serif;
+    font-size: 1rem;
+    line-height: 2.2;
+    letter-spacing: 0.08em;
+    overflow-x: auto;
+    overflow-y: hidden;
+    height: 100%;
+    column-gap: 3rem;
+  }
+
+  .preview-vertical ruby rt {
+    font-size: 0.5em;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+  }
+
+  /* ============================================================
+     サイドバー（本の背表紙 spine 的なデザイン）
+     ============================================================ */
+  .sidebar-nav-item {
+    @apply relative flex items-center gap-3 px-4 py-3 text-sm font-medium;
+    @apply text-ash hover:text-ink transition-colors duration-200;
+    @apply border-l-2 border-transparent;
+  }
+
+  .sidebar-nav-item.active {
+    @apply text-ink border-l-vermillion bg-paper-dark/50;
+  }
+
+  html.dark .sidebar-nav-item {
+    @apply text-ash-light hover:text-paper;
+  }
+
+  html.dark .sidebar-nav-item.active {
+    @apply text-paper border-l-vermillion bg-night-raised;
+  }
+
+  /* ============================================================
+     ボタン
+     ============================================================ */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2;
+    @apply px-4 py-2 text-sm font-medium;
+    @apply transition-all duration-200;
+    @apply disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply btn bg-ink text-paper;
+    @apply hover:bg-ink-light active:scale-[0.98];
+  }
+
+  html.dark .btn-primary {
+    @apply bg-paper text-ink hover:bg-paper-dark;
+  }
+
+  .btn-ghost {
+    @apply btn text-ash;
+    @apply hover:bg-paper-dark hover:text-ink;
+  }
+
+  html.dark .btn-ghost {
+    @apply text-ash-light hover:bg-night-raised hover:text-paper;
+  }
+
+  .btn-danger {
+    @apply btn text-vermillion;
+    @apply hover:bg-vermillion/10;
+  }
+
+  /* ============================================================
+     カード
+     ============================================================ */
+  .card-sumi {
+    @apply bg-paper border border-paper-darker;
+    @apply shadow-sm;
+  }
+
+  html.dark .card-sumi {
+    @apply bg-night-surface border-night-border;
+  }
+
+  /* ============================================================
+     入力フォーム
+     ============================================================ */
+  .input-sumi {
+    @apply w-full px-3 py-2 text-sm;
+    @apply bg-paper-dark border border-paper-darker;
+    @apply focus:border-ash focus:ring-0;
+    @apply outline-none transition-colors;
+    @apply text-ink placeholder-ash;
+  }
+
+  html.dark .input-sumi {
+    @apply bg-night-surface border-night-border;
+    @apply text-paper placeholder-ash-dark;
+    @apply focus:border-ash;
+  }
+
+  /* ============================================================
+     テキストエリア（執筆画面）
+     ============================================================ */
+  .writing-area {
+    @apply w-full h-full;
+    @apply text-ink;
+    @apply bg-transparent;
+    @apply outline-none border-none resize-none;
+    @apply placeholder-ash/50;
+    font-family: 'Shippori Mincho', '游明朝', '游明朝体', serif;
+  }
+
+  html.dark .writing-area {
+    @apply text-paper placeholder-ash-dark/50;
+  }
+
+  /* ============================================================
+     章番号（縦書きスタイル）
+     ============================================================ */
+  .chapter-number {
+    @apply text-xs text-ash font-gothic font-medium;
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    letter-spacing: 0.1em;
+  }
+
+  /* ============================================================
+     保存ステータス
+     ============================================================ */
+  .save-status-saved {
+    @apply text-xs text-ash/70;
+  }
+
+  .save-status-saving {
+    @apply text-xs text-vermillion/70 animate-pulse;
+  }
+
+  .save-status-error {
+    @apply text-xs text-vermillion;
+  }
+
+  /* ============================================================
+     ルビ
+     ============================================================ */
+  ruby rt {
+    font-size: 0.5em;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    letter-spacing: 0;
+  }
+
+  /* ============================================================
+     区切り線（和風）
+     ============================================================ */
+  .divider-sumi {
+    @apply relative flex items-center my-4;
+  }
+
+  .divider-sumi::before,
+  .divider-sumi::after {
+    content: '';
+    @apply flex-1 border-t border-paper-darker;
+  }
+
+  html.dark .divider-sumi::before,
+  html.dark .divider-sumi::after {
+    @apply border-night-border;
+  }
+
+  /* ============================================================
+     スクロール（縦書き用）
+     ============================================================ */
+  .scroll-horizontal::-webkit-scrollbar {
+    height: 3px;
+  }
+}
+
+@layer utilities {
+  .font-mincho { font-family: 'Shippori Mincho', '游明朝', serif; }
+  .font-gothic { font-family: 'Zen Kaku Gothic New', '游ゴシック', sans-serif; }
+
+  .text-ink-muted { color: theme('colors.ash.DEFAULT'); }
+
+  /* 行の長さを適切に制限 */
+  .prose-novel {
+    max-width: 40em;
+    line-height: 2.0;
+    letter-spacing: 0.02em;
+  }
+}

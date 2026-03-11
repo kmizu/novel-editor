@@ -10,222 +10,107 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **問題が起きたときにパニックにならないでください。**
 
-**作業を進める際は、以下の点を説明しながら実装してください：**
-
-- なぜその技術・ライブラリを選択したのか
-- 実装の手順と意図
-- コードの構造とその理由
-- テストの重要性と実装方法
+**TypeScriptでは`any`型の使用を原則禁止してください。適切な型定義を行い、型安全性を保証してください。**
 
 **作業完了前の確認事項：**
-各フェーズやタスクの完了を報告する前に、必ず以下を確認してください：
 
-1. `npm run build` - ビルドが成功すること
-2. `npm run type-check` - 型エラーがないこと
-3. `npm run lint` - リントエラーがないこと
-4. `npm run test` - 全てのテストが通ること
-5. `npm run dev` - 開発サーバーが正常に起動すること
-
-**重要：各ステップの作業が完了したら、必ずCLAUDE.mdのチェックボックスを [x] に更新してください。**
+```bash
+npm run build        # ビルドが成功すること
+npm run type-check   # 型エラーがないこと
+npm run lint         # リントエラーがないこと
+npm run test         # 全てのテストが通ること
+```
 
 ## プロジェクト概要
 
-ネット小説執筆支援エディタです。特にネット小説（カクヨム、小説家になろう等）の執筆をサポートするための多機能エディタで、プロット、キャラクター、世界観、各話ごとのメモなどを一元管理し、執筆プロセスをスムーズにします。React、TypeScript、Tailwind CSS、Viteを使用して開発されます。
+ネット小説（カクヨム、小説家になろう等）の執筆支援エディタ。プロット、キャラクター、世界観、各話メモを一元管理し、カクヨム/なろう形式でのエクスポートをサポートする。React 19 + TypeScript + Tailwind CSS + Vite で実装済み。
 
-## 主要機能（TODO）
-
-- エディタ: 本文を執筆できるシンプルなエディタ
-- プロット管理: 物語のプロットを管理・編集
-- あらすじ管理: 物語のあらすじを管理・編集
-- 各話メモ: 各話ごとの筆者メモを管理・編集
-- キャラクター管理: 各登場人物のプロフィール、他キャラとの関係性を記録
-- 世界観管理: 物語の舞台となる世界の歴史、地理、文化などの設定をまとめる
-- 自動保存: 自動的にローカルストレージに保存
-- エクスポート: プロジェクトをカクヨム形式、なろう形式としてエクスポート
-- 新規プロジェクト: 複数のプロジェクトを切り替えて作業
-
-## プロジェクトのセットアップ（予定）
-
-現在はREADME.mdのみが存在し、実装はこれから開始されます。
-
-### 推奨される初期セットアップコマンド
+## 主要コマンド
 
 ```bash
-# Viteプロジェクトの作成
-npm create vite@latest . -- --template react-ts
-
-# 依存関係のインストール
-npm install
-
-# Tailwind CSSのセットアップ
-npm install -D tailwindcss postcss autoprefixer
-npx tailwindcss init -p
-
-# 開発用ライブラリ
-npm install -D @types/react @types/react-dom eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin
+npm run dev            # 開発サーバー起動 (Vite)
+npm run build          # プロダクションビルド (tsc && vite build)
+npm run type-check     # 型チェックのみ (tsc --noEmit)
+npm run lint           # ESLintチェック
+npm run test           # Vitestでユニットテスト実行
+npm run test:watch     # ウォッチモード
+npm run test:coverage  # カバレッジレポート (目標80%+)
+npm run test:e2e       # Playwrightでのe2eテスト
+npm run check-all      # type-check + lint + test を一括実行
 ```
 
-### 推奨される開発コマンド
+## アーキテクチャ
 
-```bash
-# 開発サーバーの起動
-npm run dev
-
-# ビルド
-npm run build
-
-# プレビュー
-npm run preview
-
-# リント
-npm run lint
-
-# 型チェック
-npm run type-check
-
-# テスト実行
-npm run test
-
-# テスト（ウォッチモード）
-npm run test:watch
-
-# テストカバレッジ
-npm run test:coverage
-
-# E2Eテスト
-npm run test:e2e
-```
-
-## アーキテクチャ構造（推奨）
+### 実際のディレクトリ構造
 
 ```
 src/
-├── components/     # 再利用可能なUIコンポーネント
-├── features/       # 機能別のコンポーネント
-│   ├── editor/
-│   ├── plot/
-│   ├── character/
-│   └── worldbuilding/
-├── hooks/          # カスタムフック
-├── utils/          # ユーティリティ関数
-├── types/          # TypeScript型定義
-└── styles/         # グローバルスタイル
+├── components/
+│   ├── editor/         # TextEditor, ChapterList
+│   ├── plot/           # PlotEditor
+│   ├── character/      # CharacterForm, CharacterCard
+│   ├── worldbuilding/  # WorldSettingForm, WorldSettingCard
+│   ├── project/        # CreateProjectDialog, ProjectCard, ProjectEditDialog
+│   └── Layout.tsx      # サイドバー付き2カラムレイアウト
+├── pages/              # ルート対応のページコンポーネント
+├── hooks/              # カスタムフック（ビジネスロジック）
+├── utils/
+│   ├── storage.ts      # StorageManagerクラス (localStorage wrapper)
+│   ├── export.ts       # カクヨム/なろう/JSON形式エクスポート
+│   ├── helpers.ts
+│   └── performance.ts
+├── types/
+│   └── project.ts      # Project, Chapter, Character, Plot等の型定義
+├── router.tsx          # createBrowserRouter によるルート定義
+└── test/setup.ts       # Vitest セットアップ (jsdom + localStorage mock)
+e2e/                    # Playwright E2Eテスト
 ```
 
-## 注意事項
+### 状態管理とデータフロー
 
-- 日本語でのコミュニケーションを優先してください
-- 小説執筆に特化した機能の実装を心がけてください
-- ユーザビリティとパフォーマンスを重視してください
-- **TypeScriptでは`any`型の使用を原則禁止してください。適切な型定義を行い、型安全性を保証してください**
+外部状態管理ライブラリ（Redux/Zustand等）は使用せず、**カスタムフック + localStorage** で完結している：
 
-## テスト戦略
+- `useProjects` — プロジェクトのCRUDとアクティブプロジェクト管理
+- `useChapters` — 章の管理（追加・編集・削除・並び替え）
+- `useCharacters` / `usePlots` / `useWorldSettings` — 各機能のデータ管理
+- `useAutoSave` — テキスト変更を自動的にlocalStorageへ保存
+- `useTheme` — ダーク/ライトモード切り替え
+- `useKeyboardShortcuts` — グローバルキーボードショートカット
 
-### ユニットテスト
+**StorageManager**（`src/utils/storage.ts`）がlocalStorageのI/Oを集約。キープレフィックスは `novel_editor_`。
 
-- **フレームワーク**: Vitest（Viteとの親和性が高い）
-- **対象**: ユーティリティ関数、カスタムフック、純粋なコンポーネント
+### ルーティング
+
+React Router DOM v7 の `createBrowserRouter` を使用：
+
+| パス | ページ |
+|------|-------|
+| `/` | ホーム |
+| `/projects` | プロジェクト管理 |
+| `/editor` | テキストエディタ・章管理 |
+| `/plot` | プロット・あらすじ・各話メモ |
+| `/characters` | キャラクター管理・関係性マップ |
+| `/world-building` | 世界観設定・用語集 |
+| `/export` | カクヨム/なろう/JSON形式エクスポート |
+| `/settings` | 設定 |
+
+### 主要ライブラリ
+
+- **@headlessui/react** — アクセシブルなUIコンポーネント（ダイアログ等）
+- **@heroicons/react** — サイドバー等のアイコン
+- **Tailwind CSS** — ダークモードは `class` ベース、カスタムアニメーション定義あり
+
+## テスト
+
+- **ユニット/統合**: Vitest + React Testing Library + jsdom
+- **E2E**: Playwright (`/e2e` ディレクトリ)
 - **カバレッジ目標**: 80%以上
 
-### 統合テスト
+単一テストファイルの実行:
+```bash
+npx vitest run src/hooks/useProjects.test.ts
+```
 
-- **フレームワーク**: React Testing Library + Vitest
-- **対象**: 機能単位でのコンポーネント統合、ユーザーインタラクション
-- **重点項目**:
-  - エディタの編集・保存機能
-  - プロジェクト管理機能
-  - データの永続化と復元
+## 残課題
 
-### E2Eテスト
-
-- **フレームワーク**: Playwright
-- **対象**: 主要なユーザーフロー
-- **テストシナリオ**:
-  - 新規プロジェクト作成から章の執筆まで
-  - キャラクター・世界観設定の管理
-  - エクスポート機能
-
-### 開発ループでのテスト実行
-
-1. **プレコミット**: リントと型チェック
-2. **開発中**: ウォッチモードでユニットテスト自動実行
-3. **プルリクエスト**: 全テストスイート実行
-4. **デプロイ前**: E2Eテストを含む完全なテスト実行
-
-## 実装作業計画
-
-### フェーズ1: プロジェクト基盤構築
-
-- [x] Viteプロジェクトの初期化（React + TypeScript）
-- [x] Tailwind CSSのセットアップ
-- [x] ESLint、Prettierの設定
-- [x] 基本的なディレクトリ構造の作成
-- [x] package.jsonのスクリプト設定（dev, build, lint, type-check）
-- [x] テスト環境のセットアップ（Vitest、React Testing Library、Playwright）
-
-### フェーズ2: 基本UIとルーティング
-
-- [x] React Routerの導入と設定
-- [x] メインレイアウトコンポーネントの作成
-- [x] ナビゲーションメニューの実装
-- [x] 各機能のための基本的なページコンポーネント作成
-- [x] 基本的なコンポーネントのユニットテスト作成
-
-### フェーズ3: データモデルとストレージ
-
-- [x] TypeScript型定義の作成（Project, Chapter, Character, Plot等）
-- [x] ローカルストレージ管理のフックとユーティリティ
-- [x] データの永続化とリストア機能
-- [x] プロジェクト管理機能（新規作成、切り替え、削除）
-- [x] ストレージ機能の統合テスト作成
-
-### フェーズ4: エディタ機能
-
-- [x] テキストエディタコンポーネントの実装
-- [x] 自動保存機能
-- [x] 文字数カウント機能
-- [x] 章の管理（追加、編集、削除、並び替え）
-- [x] エディタ機能のE2Eテスト作成
-
-### フェーズ5: プロット・あらすじ管理
-
-- [x] プロットエディタの実装
-- [x] あらすじエディタの実装
-- [x] 各話メモ機能の実装
-- [ ] プロットと本文の連携機能
-
-### フェーズ6: キャラクター管理
-
-- [x] キャラクター作成・編集フォーム
-- [x] キャラクタープロフィール表示
-- [x] キャラクター間の関係性マップ
-- [x] キャラクター検索・フィルタリング
-
-### フェーズ7: 世界観管理
-
-- [x] 世界観設定の入力フォーム
-- [x] カテゴリ別管理（地理、歴史、文化等）
-- [x] 用語集機能
-- [x] 設定資料の検索機能
-
-### フェーズ8: エクスポート機能
-
-- [x] カクヨム形式でのエクスポート
-- [x] なろう形式でのエクスポート
-- [x] プレーンテキストエクスポート
-- [x] バックアップ機能（JSON形式）
-
-### フェーズ9: UI/UX改善
-
-- [x] ダークモード対応
-- [x] レスポンシブデザインの最適化
-- [x] キーボードショートカット
-- [x] アクセシビリティ改善
-
-### フェーズ10: パフォーマンス最適化と品質向上
-
-- [x] コンポーネントの最適化（メモ化等）
-- [x] 大規模プロジェクトでのパフォーマンステスト
-- [x] テストカバレッジ80%以上の達成
-- [x] CI/CDパイプラインの設定
-- [x] パフォーマンス監視の実装
+- フェーズ5: プロットと本文の連携機能（未実装）

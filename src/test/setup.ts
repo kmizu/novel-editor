@@ -1,33 +1,25 @@
 import '@testing-library/jest-dom'
-import { cleanup } from '@testing-library/react'
 import { afterEach, vi } from 'vitest'
+import { cleanup } from '@testing-library/react'
 
-// テスト後のクリーンアップ
 afterEach(() => {
   cleanup()
 })
 
-// LocalStorageのモック
-const localStorageMock: Storage = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-  length: 0,
-  key: vi.fn(),
-} as unknown as Storage
+// Tauri API のモック
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: vi.fn(),
+}))
 
-;(globalThis as { localStorage: Storage }).localStorage = localStorageMock
-
-// matchMediaのモック（Tailwind CSSのダークモード等で使用）
+// matchMedia モック
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: vi.fn().mockImplementation((query: string) => ({
     matches: false,
     media: query,
     onchange: null,
-    addListener: vi.fn(), // deprecated
-    removeListener: vi.fn(), // deprecated
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
