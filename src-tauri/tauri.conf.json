@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "novel-editor-tauri",
+  "productName": "小説工房",
   "version": "0.1.0",
-  "identifier": "com.kotamizushima.novel-editor-tauri",
+  "identifier": "com.kmizu.novel-editor",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,9 +12,12 @@
   "app": {
     "windows": [
       {
-        "title": "novel-editor-tauri",
-        "width": 800,
-        "height": 600
+        "title": "小説工房",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 600,
+        "center": true
       }
     ],
     "security": {
