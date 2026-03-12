@@ -1,14 +1,19 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { PlusIcon, EyeIcon, EyeSlashIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
+import {
+  PlusIcon, EyeIcon, EyeSlashIcon,
+  ChevronLeftIcon, ChevronRightIcon,
+  ArrowsPointingInIcon, ArrowsPointingOutIcon,
+} from '@heroicons/react/24/outline'
 import { useProjectStore } from '../stores/projectStore'
 import { useEditorStore } from '../stores/editorStore'
+import { useSettingsStore } from '../stores/settingsStore'
 import { WritingEditor } from '../components/editor/WritingEditor'
 import { NovelPreview } from '../components/editor/NovelPreview'
 import { WritingModeToggle } from '../components/editor/WritingModeToggle'
 import { ChapterNav } from '../components/editor/ChapterNav'
 import { countCharacters } from '../utils/ruby'
 
-const AUTOSAVE_DELAY = 3000 // 3秒
+const AUTOSAVE_DELAY = 3000
 
 export function EditorPage() {
   const { activeProject } = useProjectStore()
@@ -24,6 +29,7 @@ export function EditorPage() {
     saveContent,
     clearEditor,
   } = useEditorStore()
+  const { focusMode, toggleFocusMode } = useSettingsStore()
 
   const [localContent, setLocalContent] = useState('')
   const [showPreview, setShowPreview] = useState(false)
@@ -32,7 +38,6 @@ export function EditorPage() {
   const [isCreating, setIsCreating] = useState(false)
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // プロジェクト変更時に章を読み込む
   useEffect(() => {
     if (activeProject) {
       loadChapters(activeProject.id)
@@ -41,25 +46,48 @@ export function EditorPage() {
     }
   }, [activeProject, loadChapters, clearEditor])
 
-  // アクティブ章変更時にコンテンツ同期
   useEffect(() => {
     setLocalContent(activeChapter?.content ?? '')
   }, [activeChapter?.id, activeChapter?.content])
 
-  // 自動保存
   const handleContentChange = useCallback(
     (content: string) => {
       setLocalContent(content)
-
       if (!activeProject || !activeChapter) return
       if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
-
       autoSaveTimer.current = setTimeout(() => {
         saveContent(activeProject.id, activeChapter.id, content)
       }, AUTOSAVE_DELAY)
     },
     [activeProject, activeChapter, saveContent]
   )
+
+  // 手動保存
+  const handleManualSave = useCallback(() => {
+    if (!activeProject || !activeChapter) return
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+    saveContent(activeProject.id, activeChapter.id, localContent)
+  }, [activeProject, activeChapter, localContent, saveContent])
+
+  // キーボードショートカット
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey
+      if (mod && e.key === 's') {
+        e.preventDefault()
+        handleManualSave()
+      }
+      if (mod && e.shiftKey && e.key === 'F') {
+        e.preventDefault()
+        toggleFocusMode()
+      }
+      if (e.key === 'Escape' && focusMode) {
+        toggleFocusMode()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleManualSave, toggleFocusMode, focusMode])
 
   useEffect(() => {
     return () => {
@@ -78,7 +106,6 @@ export function EditorPage() {
   const wordCount = countCharacters(localContent)
   const totalWordCount = chapters.reduce((sum, c) => sum + c.wordCount, 0)
 
-  // プロジェクト未選択
   if (!activeProject) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -96,10 +123,9 @@ export function EditorPage() {
 
   return (
     <div className="flex h-full">
-      {/* 章ナビゲーション */}
-      {showChapterNav && (
+      {/* 章ナビゲーション（フォーカスモード時は非表示） */}
+      {showChapterNav && !focusMode && (
         <div className="w-56 flex-none flex flex-col border-r border-paper-darker dark:border-night-border">
-          {/* 章ヘッダー */}
           <div className="px-3 py-3 border-b border-paper-darker dark:border-night-border flex items-center justify-between">
             <span className="text-xs font-gothic text-ash tracking-wide">章一覧</span>
             <button
@@ -111,7 +137,6 @@ export function EditorPage() {
             </button>
           </div>
 
-          {/* 新規章作成フォーム */}
           {isCreating && (
             <div className="px-3 py-2 border-b border-paper-darker dark:border-night-border animate-slide-up">
               <input
@@ -137,7 +162,6 @@ export function EditorPage() {
             </div>
           )}
 
-          {/* 章リスト */}
           <ChapterNav
             chapters={chapters}
             activeChapterId={activeChapter?.id ?? null}
@@ -145,7 +169,6 @@ export function EditorPage() {
             projectId={activeProject.id}
           />
 
-          {/* 合計文字数 */}
           <div className="px-3 py-2 border-t border-paper-darker dark:border-night-border">
             <p className="text-xs text-ash font-gothic">
               合計 {totalWordCount.toLocaleString()} 字
@@ -162,17 +185,19 @@ export function EditorPage() {
           border-b border-paper-darker dark:border-night-border
           shrink-0
         ">
-          {/* 章ナビ折りたたみ */}
-          <button
-            onClick={() => setShowChapterNav(!showChapterNav)}
-            className="btn-ghost p-1"
-            title={showChapterNav ? '章一覧を隠す' : '章一覧を表示'}
-          >
-            {showChapterNav
-              ? <ChevronLeftIcon className="w-4 h-4" />
-              : <ChevronRightIcon className="w-4 h-4" />
-            }
-          </button>
+          {/* 章ナビ折りたたみ（フォーカスモード時は非表示） */}
+          {!focusMode && (
+            <button
+              onClick={() => setShowChapterNav(!showChapterNav)}
+              className="btn-ghost p-1"
+              title={showChapterNav ? '章一覧を隠す' : '章一覧を表示'}
+            >
+              {showChapterNav
+                ? <ChevronLeftIcon className="w-4 h-4" />
+                : <ChevronRightIcon className="w-4 h-4" />
+              }
+            </button>
+          )}
 
           {/* 現在の章タイトル */}
           <span className="font-mincho text-sm text-ink dark:text-paper truncate flex-1 min-w-0">
@@ -183,12 +208,10 @@ export function EditorPage() {
           <div className="flex items-center gap-2 shrink-0">
             <WritingModeToggle />
 
-            {/* 文字数 */}
             <span className="text-xs text-ash font-gothic hidden sm:inline">
               {wordCount.toLocaleString()} 字
             </span>
 
-            {/* 保存ステータス */}
             <span className={
               saveError ? 'save-status-error' :
               isSaving ? 'save-status-saving' :
@@ -208,6 +231,18 @@ export function EditorPage() {
                 : <EyeIcon className="w-4 h-4" />
               }
             </button>
+
+            {/* 集中モードトグル */}
+            <button
+              onClick={toggleFocusMode}
+              className="btn-ghost p-1"
+              title={focusMode ? '集中モード解除 (Esc)' : '集中モード (⌘⇧F)'}
+            >
+              {focusMode
+                ? <ArrowsPointingOutIcon className="w-4 h-4" />
+                : <ArrowsPointingInIcon className="w-4 h-4" />
+              }
+            </button>
           </div>
         </div>
 
@@ -215,7 +250,6 @@ export function EditorPage() {
         <div className="flex-1 flex overflow-hidden">
           {activeChapter ? (
             <>
-              {/* テキストエディタ */}
               <div className={`flex-1 overflow-hidden ${showPreview ? 'w-1/2' : 'w-full'}`}>
                 <WritingEditor
                   content={localContent}
@@ -223,7 +257,6 @@ export function EditorPage() {
                 />
               </div>
 
-              {/* 縦書きプレビュー */}
               {showPreview && (
                 <div className="w-1/2">
                   <NovelPreview
