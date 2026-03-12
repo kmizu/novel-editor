@@ -1,6 +1,7 @@
 mod models;
 mod storage;
 mod commands;
+mod export;
 
 use tauri::Manager;
 use storage::NovelStorage;
@@ -52,6 +53,8 @@ pub fn run() {
             commands::save_plot,
             commands::delete_plot,
             commands::reorder_plots,
+            // エクスポート
+            commands::get_export_content,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

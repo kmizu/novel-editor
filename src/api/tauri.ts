@@ -103,12 +103,6 @@ export const api = {
   // ============================================================
   // エクスポート
   // ============================================================
-  exportProject: (projectId: string, settings: ExportSettings): Promise<void> =>
-    invoke('export_project', { projectId, settings }),
-
-  backupProject: (projectId: string): Promise<void> =>
-    invoke('backup_project', { projectId }),
-
-  importBackup: (): Promise<ProjectMeta> =>
-    invoke('import_backup'),
+  getExportContent: (projectId: string, settings: ExportSettings): Promise<string> =>
+    invoke('get_export_content', { projectId, settings }),
 } as const
